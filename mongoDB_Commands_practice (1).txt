@@ -1,0 +1,1020 @@
+Create Database:-
+-----------------
+use people
+===============================================================================
+Create Collection:-
+-------------------
+automatically created when we insert some data
+===============================================================================
+Create Documents:-
+------------------
+db.people.insertOne({name:"Bob", age:32, gender:"Male"})
+db.people.insertOne({name:"Raju", age:45, gender:"Male"})
+===============================================================================
+List Databases & collections:-
+-------------------------------
+show dbs
+show collections
+===============================================================================
+
+
+Drop collections & databases:-
+------------------------------
+db.people.drop()
+db.dropDatabase()
+===============================================================================
+Create, Update, Find & Delete operations(CRUD):-
+-----------------------------------------------
+Create:
+=======
+insertOne():
+------------
+db.person.insertOne({name:"Bob", age:32, gender:"Male"})
+
+insertMany():
+-------------
+db.person.insertMany([{name:"Zen", age:54, gender:"Male"}, {name:"Catherine", age:34, gender:"Female"}])
+
+insert():
+---------
+
+combination of both insertOne() & insertMany()
+
+Read:
+=====
+find():
+-------
+db.samples.find()
+db.samples.find().pretty()   // will print in an understandable structure
+db.samples.find().count()    // no. of documents
+
+findOne():
+----------
+db.samples.findOne()  // will give first document
+
+Update:
+=======
+updateOne():
+------------
+db.samples.updateOne({_id: ObjectId("5f05788738510f90eb50a889")},{$set:{phone:248485685}})
+
+updateMany():
+-------------
+db.samples.updateMany({gender:"Female"},{$set:{isFemale:true}})
+
+update():         
+---------
+db.samples.update({_id: ObjectId("5f05788738510f90eb50a889")},{phone:248485685})  // will override other details
+db.samples.update({_id: ObjectId("5f05788738510f90eb50a889")},{$set:{phone:248485685}}) // will update phone field
+
+replaceOne():
+-------------
+db.samples.replaceOne({_id: ObjectId("5f05788738510f90eb50a889")},{name:"John", age:42})//replaces the matched document with the 												new feilds given in the query
+
+Delete:
+=======
+deleteOne():
+------------
+db.person.deleteOne({name:"John"})//if many documents exists only first instance will be deleted
+					//if deleteMany() is used all the matched documents will be deleted
+deleteMany():
+-------------
+db.person.deleteMany({})
+==============================================================================
+Understanding _id field:-
+------------------------
+Inserting a document with id = 1
+db.samples.insertOne({_id:1, name:"Bob", age:23})
+Again inserting another document with same id,
+db.samples.insertOne({_id:1, name:"Tom", age:29})
+will give duplicate key error
+===============================================================================
+MongoDB CRUD operations:
+------------------------
+
+1. INSERT:
+==========
+
+--> insertOne 
+--> insertMany
+--> insert
+--> ordered inserts
+--> write concern
+    -- Data should be stored and you can control the "level of guarantee" of that to happen with the writeConcern option
+
+Examples:
+---------
+use contactData
+
+db.persons.insertOne({name:"Henry", age:26, hobbies:["Sports", "Cooking"]})
+db.persons.insertOne({name:"Manuel", age:31, hobbies:["Cooking", "Reading"]})
+
+db.persons.insertMany([{name:"Bob",age:29, hobbies:["Hiking", "Yoga"]},{name:"Maria",age:21}, {name:"Samuel", age:34}])
+
+db.persons.insert({name: "Phil", age:35})
+db.persons.insert([{name:"Kim", age:24},{name:"Hans", age:38}])
+
+db.persons.find().pretty()
+
+db.hobbies.insertMany([{_id:"sports", name:"Sports"},{_id:"cooking", name:"Cooking"},{_id:"yoga", name:"Yoga"}])
+
+db.hobbies.find().pretty() 
+
+---> Trying to add duplicates:
+
+db.hobbies.insertMany([{_id:"reading", name:"Reading"},{_id:"cooking", name:"Cooking"},{_id:"hiking", name:"Hiking"}])
+
+db.hobbies.find().pretty()
+
+db.hobbies.insertMany([{_id:"reading", name:"Reading"},{_id:"cooking", name:"Cooking"},{_id:"hiking", name:"Hiking"}], {ordered: false})
+
+db.hobbies.find().pretty()
+
+db.persons.find().pretty()
+
+db.persons.insertOne({name:"Chrissy", age:41}, {writeConcern:{w:0}})
+
+db.persons.find().pretty()
+
+db.persons.insertOne({name:"Alex", age:31}, {writeConcern:{w:1}})
+
+db.persons.find().pretty()
+
+db.persons.insertOne({name:"Michael", age:51}, {writeConcern:{w:1, j:false}})
+
+db.persons.insertOne({name:"Michaela", age:25}, {writeConcern:{w:1, j:true}})
+
+db.persons.insertOne({name:"Aliya", age:23}, {writeConcern:{w:1, j:true, wtimeout:200}})
+
+                      		[OR]
+
+db.persons.insertOne({name:"Aliya", age:23}, {w:1, j:true, wtimeout:200})
+
+Import and export:
+------------------
+Examples:
+---------
+--json import:
+mongoimport E:\Bigdata\MongoDB\data\tv-shows.json --db movie --collection movies --drop --jsonArray
+
+--csv import:
+mongoimport --type csv --file E:\Bigdata\MongoDB\data\addresses.csv --headerline -d empinfo -c addresses
+
+--json export:
+mongoexport  --db movie --collection movies --out E:\Bigdata\MongoDB\data\tv-shows12345.json
+
+--csv export: 
+mongoexport --type csv --out E:\Bigdata\MongoDB\data\addresses1.csv --fields Name,City,State -d empinfo -c addresses
+
+2. FIND/READ:
+=============
+
+--> findOne
+--> find
+--> MongoDB Operators
+    -- Query Selectors
+    -- Projection Operators
+--> Regular Expressions
+--> Querying Arrays
+--> Data projection
+--> LIMIT, SORT, SKIP
+--> Cursors
+
+Examples:
+---------
+use movie
+
+db.movies.findOne()
+
+db.movies.find()
+
+db.movies.find().pretty()
+
+db.movies.find().count()
+
+db.movies.find({runtime:{$eq:30}}).pretty()
+
+db.movies.find({runtime:{$gte:60}}).pretty()
+
+db.movies.find({runtime:{$ne:60}}).pretty() // similarly, lt, lte, gt
+
+db.movies.find({"rating.average":{$gt:7}}).pretty() // querying embedded documents, query condition should be in "" 
+
+db.movies.find({genres:"drama"}).pretty() // "drama" not equal to "Drama" - case sensitive
+
+db.movies.find({genres:"Drama"}).pretty()  // Querying Array elements
+
+db.movies.find({genres:["Drama"]}).pretty() // contains only "Drama" element
+
+db.movies.find({runtime:{$in: [30, 42]}}).pretty()  // in the set of values 30 and 42
+
+db.movies.find({runtime:{$nin: [30, 42]}}).pretty()   // not in the 30 and 42
+
+// Comparison Operators
+
+db.movies.find({$or: [{"rating.average":{$lt:5}}, {"rating.average":{$gt:9}}]}).pretty() // Should be in array
+
+db.movies.find({$nor: [{"rating.average":{$lt:5}}, {"rating.average":{$gt:9}}]}).pretty()
+
+db.movies.find({$and:[{"rating.average":{$gt:9}}, {genres:"Drama"}]}).pretty()
+
+				  [OR]
+
+db.movies.find({"rating.average":{$gt:9}, genres:"Drama"}).pretty()  //if different fields both give same results
+
+// if same field it works diffrently
+db.movies.find({$and: [{genres: "Drama"}, {genres: "Horror"}]}).count()
+db.movies.find({genres: "Drama", genres: "Horror"}).count()      [OR]
+db.movies.find({genres: "Horror"}).count()
+
+db.movies.find({runtime:{$not:{$eq:60}}}).count()          [OR]
+db.movies.find({runtime:{$ne:60}}).count()
+
+// Element operators
+
+use user
+db.users.insertMany([{name:"Max", hobbies: [{title:"Sports", frequency:3},{titlt:"Cooking", frequency:6}], phone:475489575}, {name:"Manuel", hobbies: [{title:"Cooking", frequency:4}, {title:"Cars", frequency:2}], phone:73874858459, age:39}])
+
+db.users.find().pretty()
+
+db.users.find({age: {$exists: true}}).pretty()
+
+db.users.insertOne({name:"Anna", hobbies:[{title:"Sports", frequency:2}, {title:"Yoga", frequency:3}], phone:9758948574, age: null})
+
+db.users.find().pretty()
+db.users.find({age: {$exists: true}}).pretty()
+
+db.users.find({age: {$exists: false}}).pretty()
+
+db.users.find({age: {$exists: true, $ne:null}}).pretty()
+
+db.users.insertOne({name:"Trump", hobbies:[{title:"Coding", frequency:2}, {title:"Hiking", frequency:3}], phone:"9758948574", age: null})
+
+db.users.find().pretty()
+
+db.users.find({phone:{$type:"number"}}).pretty()
+
+db.users.find({phone:{$type:"string"}}).pretty()
+
+use student
+db.students.insertMany([{sname:"Raju",age:34,sem:1}, {sname:"Anitha",age:23,sem:2}, {sname:"Harsha",age:25,sem:1},{teachername:"Veer"}])
+db.students.distinct("sem")
+
+// Evaluation Operators
+//regex
+use movie
+
+db.movies.find().pretty()
+
+db.movies.find({summary: {$regex: /horror/}}).pretty()
+
+//expr
+use financialData
+
+db.sales.insertMany([{volume:100, target:120}, {volume:89, target:80}, {volume:200, target:178}])
+
+db.sales.find().pretty()
+
+db.sales.find({$expr:{$gt:["$volume", "$target"]}}).pretty()
+
+db.sales.find({$expr: {$gt: [{$cond: {if: {$gte: ["$volume", 190]}, then: {$subtract: ["$volume", 10]}, else: "$volume"}}, "$target"]}}).pretty()
+
+db.sales.find({$expr: {$gt: [{$cond: {if: {$gte: ["$volume", 190]}, then: {$subtract: ["$volume", 30]}, else: "$volume"}}, "$target"]}}).pretty()
+
+// Querying Arrays
+
+use user
+
+db.users.insertMany([{name:"Max", hobbies: [{title:"Sports", frequency:3},{title:"Cooking", frequency:6}], phone:475489575}, {name:"Manuel", hobbies: [{title:"Cooking", frequency:4}, {title:"Cars", frequency:2}], phone:73874858459, age:39}])
+
+db.users.insertOne({name:"Anna", hobbies:[{title:"Sports", frequency:2}, {title:"Yoga", frequency:3}], phone:9758948574, age: null})
+
+db.users.insertOne({name:"Trump", hobbies:[{title:"Coding", frequency:2}, {title:"Hiking", frequency:3}], phone:"9758948574", age: 34})
+
+db.users.find().pretty()
+
+db.users.find({"hobbies.title": "Sports"}).pretty()
+db.users.find({hobbies: {title:"Sports", frequency:2}}).pretty()
+
+
+// Querying Array By Index
+use user
+db.students.insertMany([{name:"Raju",age:23,marks:[89,90,92,95]}, {name:"Anitha",age:22,marks:[90,98,94,99]}])
+db.students.find().pretty()
+db.students.find({"marks.1":{$gte:92}}).pretty()
+db.students.find({"marks.0":{$gte:80}}).pretty()
+db.students.find({"marks.2":{$gt:95}}).pretty()
+
+
+// Array Query Selectors
+
+db.users.insertOne({name:"Chris", hobbies:["Sports", "Cooking", "Hiking"]})
+fdb.users.find().pretty()
+db.users.find({hobbies: {$size:3}}).pretty() // size of array - 3
+
+mongoimport E:\Bigdata\MongoDB\data\boxoffice-extended.json --db boxOffice --collection movies --drop --jsonArray
+
+use boxOffice
+db.movies.find().pretty()
+db.movies.find({genre: ["action", "thriller"]}).pretty()
+db.movies.find({genre: {$all: ["action", "thriller"]}}).pretty()
+
+use user
+db.users.find().pretty()
+db.users.find({$and: [{"hobbies.title":"Sports"}, {"hobbies.frequency":{$gte:2}}]}).pretty()
+db.users.find({$and: [{"hobbies.title":"Sports"}, {"hobbies.frequency":{$gte:3}}]}).pretty()
+db.users.find({hobbies: {$elemMatch: {title:"Sports", frequency:{$gte: 3}}}}).pretty()
+
+// Cursor
+use movie
+db.movies.find().pretty()
+it
+db.movies.find().count()
+db.movies.find().next()
+db.movies.find().next() // will give the same next element because it starts from first
+//To avoid this, we can write using a small java script
+const dataCursor = db.movies.find()
+dataCursor.next()
+dataCursor.next()
+dataCursor.forEach(doc => {printjson(doc)}) // will give all the docs
+dataCursor.next()  // will give error beacuse cursor is exhausted
+dataCursor.hasNext() // to check if the next element exists or not
+
+// SORT, SKIP, LIMIT
+db.movies.find().sort({"rating.average":1}).pretty() 
+db.movies.find().sort({"rating.average":1, runtime:-1}).pretty()
+db.movies.find().sort({"rating.average":1}).skip(238).pretty()
+db.movies.find().sort({"rating.average":1}).skip(239).limit(10).pretty()
+
+Note:
+-----
+1 -> Ascending
+-1 -> Descending
+
+// PROJECTION
+db.movies.find({}, {name:1, genres:1, runtime:1, rating:1}).pretty()  // by default _id:1
+
+# Acts as a placeholder to update the first element that matches the query condition.
+# first element should be 'Drama'
+db.movies.find({genres: "Drama"}, {"genres.$": 1}).pretty()
+
+# Both 'Drama' and 'Horror' should present
+db.movies.find({genres:{$all:["Drama","Horror"]}},{"genres.$": 1}).pretty()
+
+# Filter the documents that contains 'Drama', among them documents containing 'Horror' will be displayed
+
+db.movies.find({genres:"Drama"}, {genres:{$elemMatch:{$eq:"Horror"}}}).pretty()
+
+# Filter the documents that have rating.average > 9, among them displays the documents containing element 'Horror'
+
+db.movies.find({"rating.average":{$gt:9}}, {genres:{$elemMatch:{$eq:"Horror"}}}).pretty()
+
+# displays two elements
+
+db.movies.find({"rating.average":{$gt:9}}, {genres:{$slice:2}, name:1}).pretty()  
+
+# In the array: 1 is no. of elements from starting to skip and 2 is next two elements
+
+db.movies.find({"rating.average":{$gt:9}}, {genres: {$slice:[1,2]},name:1}).pretty() 
+
+3. UPDATE:
+==========
+
+--> updateOne
+--> updateMany
+--> replaceOne
+--> update with write concern
+--> update with upsert option
+--> update operators
+    -- Field Update Operators
+    -- Array Update Operators
+--> bulkWrite
+
+Examples:
+---------
+use user
+
+db.users.find().pretty()
+
+# { "acknowledged" : true, "matchedCount" : 1, "modifiedCount" : 1 }
+
+db.users.updateOne({_id:ObjectId("5f0aad83682db372646bb923")},{$set:{hobbies:[{title:"Sports", frequency:5}, {title:"Cooking", frequency:3}, {title:"Hiking", frequency:1}]}})
+
+# { "acknowledged" : true, "matchedCount" : 1, "modifiedCount" : 0 }
+
+db.users.updateOne({_id:ObjectId("5f0aad83682db372646bb923")},{$set:{hobbies:[{title:"Sports", frequency:5}, {title:"Cooking", frequency:3}, {title:"Hiking", frequency:1}]}})
+
+db.users.updateOne({_id:ObjectId("5f0aad83682db372646bb923")}, {$set:{age:40, phone:64756346589}})
+
+db.users.find().pretty()
+
+db.users.find({"hobbies.title":"Sports"}).pretty()
+
+# "lastModified" : ISODate("2020-09-02T20:44:58.320Z")
+
+db.users.updateMany({"hobbies.title":"Sports"}, {$set: {isSporty: true},$currentDate:{lastModified:true}})
+
+db.users.find().pretty()
+
+db.users.updateOne({name:"Trump"},{$set: {age: 78}})
+db.users.updateOne({name:"Trump"},{$inc: {age:1}})
+db.users.updateOne({name:"Trump"},{$inc: {age:-1}})
+
+db.users.find().pretty()
+
+db.users.updateOne({name:"Trump"}, {$inc:{age:1}, $set:{isSporty:false}})
+
+db.users.find().pretty()
+
+db.users.updateOne({name:"Trump"}, {$inc:{age:1}, $set:{age:30}}) //error
+
+db.users.find().pretty()
+
+db.users.updateOne({name:"Chris"}, {$min:{age:35}})
+
+db.users.find().pretty()
+
+db.users.updateOne({name:"Chris"}, {$min:{age:38}}) // will not update new value
+
+db.users.find().pretty()
+
+db.users.updateOne({name:"Chris"}, {$max:{age:32}})   // will not update new value
+
+db.users.find().pretty()
+
+db.users.updateOne({name:"Chris"}, {$max:{age:38}})
+
+db.users.find().pretty()
+
+db.users.updateOne({name:"Trump"}, {$mul: {age:2}})
+
+// Getting rid of fields
+// $unset operator is used to delete a particular field
+db.users.find().pretty()
+db.users.updateMany({isSporty:true}, {$unset: {phone:""}})
+db.users.find().pretty()
+
+// Renaming Fields
+db.users.updateMany({}, {$rename: {age: "totalAge"}})
+
+//Upsert Fields
+db.users.find().pretty()
+
+# no error, no matchedCount, no modifiedCount
+
+db.users.updateOne({name:"Maria"},{$set:{age:29, hobbies:[{title:"Good Food", frequency:3}], isSporty:true}})
+
+# will insert and update 
+
+db.users.updateOne({name:"Maria"},{$set:{age:29, hobbies:[{title:"Good Food", frequency:3}], isSporty:true}},{upsert:true})
+db.users.find().pretty()
+
+// Updating matched Array elements
+
+# checks in different documents
+db.users.find({$and: [{"hobbies.title":"Sports"}, {"hobbies.frequency":{$gte:3}}]}).pretty()
+
+# should match the sequence
+db.users.find({hobbies: {$elemMatch: {title: "Sports", frequency: {$gte:3}}}}).pretty()
+
+# { "acknowledged" : true, "matchedCount" : 1, "modifiedCount" : 1 }
+db.users.updateMany({hobbies: {$elemMatch: {title:"Sports", frequency: {$gte:3}}}}, {$set: {"hobbies.$.highFrequency":true}})
+db.users.find().pretty()
+
+// Updating all Array elements
+# { "acknowledged" : true, "matchedCount" : 1, "modifiedCount" : 0 }
+db.users.updateMany({hobbies: {$elemMatch: {title:"Sports", frequency: {$gte:3}}}}, {$set: {"hobbies.$.highFrequency":true}})
+db.users.find().pretty()
+
+db.users.updateMany({totalAge: {$gt:30}}, {$inc: {"hobbies.frequency":-1}})
+# Acts as a placeholder to update all elements in an array for the documents that match the query condition.
+db.users.updateMany({totalAge: {$gt:30}}, {$inc: {"hobbies.$[].frequency":-1}})
+
+//Adding elements to Arrays
+db.users.find().pretty()
+#add new element to the array
+db.users.updateOne({name:"Maria"},{$push:{hobbies: {title:"Sports",frequency:2}}})
+db.users.find().pretty()
+# Adds an item to an array.
+db.users.updateOne({name:"Maria"}, {$push:{hobbies:{$each:[{title:"Good Wine", frequency:1}, {title:"Hiking", frequency:2}], $sort:{frequency:-1}}}})
+db.users.find().pretty()
+
+//Removing elements from Arrays
+#Removes all array elements that match a specified query.
+db.users.updateOne({name:"Maria"},{$pull:{hobbies:{title:"Hiking"}}})
+#Removes the first or last item of an array.
+db.users.updateOne({name:"Chris"},{$pop:{hobbies:1}})
+
+//$addToSet
+db.users.find().pretty()
+db.users.updateOne({name:"Maria"},{$addToSet:{hobbies: {title:"Hiking",frequency:2}}})
+
+//Difference between $push and $addToSet
+push can add duplicates but addToSet don't
+
+4. DELETE:
+==========
+db.users.find().pretty()
+
+db.users.deleteOne({name:"Chris"})
+
+db.users.find().pretty()
+
+db.users.deleteMany({totalAge: {$exists:false}, isSporty:true})
+
+db.users.deleteMany({})
+
+db.users.find().pretty()
+
+
+// remove & remove with write concern
+
+use user
+
+db.users.insertMany([{name:"Max", hobbies: [{title:"Sports", frequency:3},{titlt:"Cooking", frequency:6}], phone:475489575}, {name:"Manuel", hobbies: [{title:"Cooking", frequency:4}, {title:"Cars", frequency:2}], phone:73874858459, age:39}])
+
+db.users.insertOne({name:"Anna", hobbies:[{title:"Sports", frequency:2}, {title:"Yoga", frequency:3}], phone:9758948574, age: null})
+
+db.users.insertOne({name:"Trump", hobbies:[{title:"Coding", frequency:2}, {title:"Hiking", frequency:3}], phone:"9758948574", age: 34})
+
+db.users.insertMany([{name:"Maxy", hobbies: [{title:"Sports", frequency:3},{titlt:"Cooking", frequency:6}], phone:475489575}, {name:"Manuu", hobbies: [{title:"Cooking", frequency:4}, {title:"Cars", frequency:2}], phone:73874858459, age:39}])
+
+db.users.find().pretty()
+
+db.users.remove({"hobbies.frequency":{$gte:4}})     // like update, insert
+
+db.users.remove({"hobbies.frequency":{$gte:2}},true)  // will remove the first document that satisfies the query
+
+# The following operation to a replica set removes all the documents from the collection users where "hobbies.frequency" is greater than 2 and specifies a write concern of "w: majority" with a wtimeout of 5000 milliseconds such that the method returns after the write propagates to a majority of the voting replica set members or the method times out after 5 seconds.
+
+db.users.remove({"hobbies.frequency":{$gte:2}},{writeConcern:{w:"majority",wtimeout:5000}})
+
+====================================================================================================================
+	
+					Indexes:-  
+					--------
+--> Retrieves data efficiently
+--> Fundamentally, indexes in MongoDB are similar to indexes in other database systems. MongoDB defines indexes at the collection level and supports indexes on any field or sub-field of the documents in a MongoDB collection.
+--> By default, all collections have an index on the _id field, and applications and users may add additional indexes to support important queries and operations.
+
+Single Field Index:
+-------------------
+db.person.explain("executionStats").find({"dob.age":{$gt:60}})
+db.person.createIndex({"dob.age":1})
+db.person.explain("executionStats").find({"dob.age":{$gt:60}})
+db.person.dropIndex({"dob.age":1})
+
+Compound Indexes:
+-----------------
+db.person.createIndex({"dob.age":1, gender:1})
+db.person.explain().find({"dob.age":35, gender:"male"}) 
+db.person.explain().find({"dob.age":35})  
+db.person.explain().find({gender:"male"}) //no index 
+
+db.person.explain().find({"dob.age":35}).sort({gender:1}) //sorting
+db.person.getIndexes() //to know default indexes
+
+Unique Indexes:
+---------------
+-- helps you as a developer to maintain consistency and helps to avoid duplicate data for the fields that you need to have unique
+
+db.person.createIndex({email:1},{unique:true})
+db.person.find({email:"abigail.clark@example.com"})
+db.person.find({email:"abigail.clark@example.com"}).count()  //doubt
+
+Partial Indexes:
+----------------
+db.users.insertMany([{name:"Max", email:"max@test.com"},{name:"Manu"}])
+db.users.find().pretty()
+db.users.createIndex({email:1}, {unique:true}) // allows no duplicates
+db.users.insertOne({name:"Anna"})  // will give error because already a doc with no email already exists
+
+TTL(Time-To-Live)Indexes: 
+--------------------------
+--> does not work for compound indexes
+--> works only on date objects
+--> deletes after every 10sec of adding a new element
+
+db.sessions.insertOne({data:"ejfejf", createdAt:new Date()})
+db.sessions.find().pretty()
+db.sessions.createIndex({createdAt:1},{expireAfterSeconds:10}) 
+db.sessions.find().pretty()
+db.sessions.insertOne({data:"ejfejfgbdjbd", createdAt:new Date()})
+db.sessions.find().pretty()
+
+Query Diagnosis & Query Planner:
+--------------------------------
+explain(): To understand how MongoDB will execute your queries. It has 3 values:
+1. queryPlanner -> Show summary for executed query + Winning plan
+
+2. executionStats -> Show detailed summary for executed query + Winning plan + possibly Rejected plans
+Ex: db.customers.explain("executionStats").find({name:"Max"})
+
+3. allPlansExecution -> Show detailed summary for executed query + Winning plan + Winning plan Decision process
+Ex: db.customers.explain("allPlansExecution").find({name:"Max",age:30})
+
+Covered query:
+--------------
+A covered query is a query that can be satisfied entirely using an index and does not have to examine any documents. An index covers a query when all of the following apply: all the fields in the query are part of an index, and all the fields returned in the results are in the same index. 
+
+db.customers.insertMany([{name:"Max", age:29, salary:2000},{name:"Manu", age:30, salary:4000}] )
+db.customers.createIndex({name:1})
+db.customers.explain("executionStats").find({name:"Max"})
+db.customers.explain("executionStats").find({name:"Max"},{_id:0,name:1})
+
+Rejecting Plans:
+----------------
+db.customers.createIndex({age:1, name:1})
+db.customers.explain().find({name:"Max",age:30})
+
+How MongoDB figure out which plan is better plan?
+-------------------------------------------------
+Winning plans:
+--------------
+--> Lets consider, if we have 100 documents and have 3 approaches
+--> It looks for the approach that finds 100 docs first and it will caches that winning plan(that satisfies the query we sent and with the fields we are looking for and values of fields we are looking for)
+--> This cache is cleared after certain amount of inserts or index is rebuilt or other indexes are added/removed or MongoDB server is restarted
+
+Multi-key Indexes:
+------------------
+--> works as a normal indexes but stored as different
+
+db.contacts.insertOne({name:"Max", hobbies:["Cooking", "Sports"], addresses: [{street:"Main Street"}, {street: "Second Street"}]})
+
+db.contacts.findOne()
+
+db.contacts.createIndex({hobbies:1})
+
+db.contacts.explain("executionStats").find({hobbies:"Sports"})
+
+--> Indexes holds the documents, but not the fields of the documents
+    
+db.contacts.createIndex({addresses:1})
+
+db.contacts.explain("executionStats").find({"addresses.street":"Main Street"}) //gives COLLSCAN
+
+--> Multi-key holds both documents and its fields
+
+db.contacts.createIndex({"addresses.street":1})
+
+db.contacts.explain("executionStats").find({"addresses.street":"Main Street"}) //gives IXSCAN
+
+db.contacts.createIndex({name:1, hobbies:1}) // creates index
+
+db.contacts.createIndex({addresses:1, hobbies:1}) //gives error - "CannotIndexParallelArrays"
+
+Text Indexes:
+-------------
+--> It is a special kind of Multi-key index
+--> There is only one text index for a collection
+
+db.products.insertMany([{title:"A Book", description:"This is an awesome book about a young artist!"}, {title:"Red T-Shirt", description:"This T-Shirt is red and it's pretty awesome!"}])
+
+db.products.find().pretty()
+
+db.products.createIndex({description:"text"})
+
+db.products.find({$text: {$search: "awesome"}}).pretty()
+
+db.products.find({$text: {$search: "book"}}).pretty()
+
+db.products.find({$text: {$search: "red book"}}).pretty()
+
+db.products.find({$text: {$search: "\"red book\""}}).pretty() // we can also search for phrase
+db.products.find({$text: {$search: "\"awesome book\""}}).pretty()
+
+// text indexes (sorting using projection)
+db.products.find({$text: {$search: "awesome t-shirt"}}).pretty()
+
+db.products.find({$text: {$search: "awesome t-shirt"}},{score:{$meta:"textScore"}}).pretty()
+
+db.products.find({$text: {$search: "awesome t-shirt"}},{score:{$meta:"textScore"}}).sort({score:{$meta:"textScore"}}).pretty()
+
+db.products.dropIndex("description_text")
+
+db.products.getIndexes()
+
+$meta 
+-----
+The $meta projection operator returns for each matching document the metadata (e.g. "textScore") associated with the query
+textScore:
+Returns the score associated with the corresponding $text query for each matching document. The text score signifies how well the document matched the search term or terms. If not used in conjunction with a $text query, returns a score of 0. 
+
+db.products.createIndex({title:"text"})     // will give error
+db.products.dropIndex("title_text")
+
+Creating combined text indexes:
+--------------------------------
+db.products.insertOne({title:"A Ship", description:"Floats perfectly"})
+
+db.products.find().pretty()
+
+db.products.createIndex({title:"text", description:"text"})
+
+db.products.find({$text:{$search: "ship book"}}).pretty()
+
+db.products.find({$text:{$search: "ship book"}},{score:{$meta:"textScore"}}).pretty()
+
+db.products.find({$text:{$search: "ship book"}},{score:{$meta:"textScore"}}).sort({score:{$meta:"textScore"}}).pretty()
+
+db.products.find({$text:{$search: "an a"}},{score:{$meta:"textScore"}}).pretty()
+
+// We can also exclude words 
+db.products.find({$text:{$search:"awesome -t-shirt"}}).pretty()
+
+db.products.getIndexes()
+db.products.dropIndex("title_text_description_text")
+db.products.getIndexes()
+
+Setting the default language & using weights:
+---------------------------------------------
+
+db.products.createIndex({title:"text", description:"text"},{default_language:"english", weights:{title:1, description:10}})
+
+db.products.find().pretty()
+
+db.products.find({$text:{$search:"red"}},{score:{$meta:"textScore"}}).pretty()
+
+db.products.find({$text:{$search:"RED ", $caseSensitive:true}},{score:{$meta:"textScore"}}).pretty()
+
+db.products.find({$text:{$search:"RED Ship", $caseSensitive:true}},{score:{$meta:"textScore"}}).pretty()
+
+db.products.getIndexes()
+
+db.products.dropIndex("title_text_description_text")
+
+Building Indexes:
+-----------------
+We can add indexes in 2 ways:
+1. Foreground
+    -- Collection is locked during index creation
+    -- Faster
+   EX: db.ratings.createIndex({age:1})
+  
+2. Background
+    -- Collection is accessible during index creation
+    -- Slower
+   EX: db.ratings.createIndex({age:1}, {background: true})
+=================================================================================
+
+Aggregation Framework:-
+----------------------
+
+--> To retrieve data efficiently & in a structured way.
+--> You can use it to retrieve the data in exactly format you need in your app.
+--> Aggregation is a pipeline of steps that runs on the data that is retrieved from your collection and then gives you the output in the form you needed.
+
+Collection -> {$match} -> {$sort} -> {$group} -> {$project} -> o/p(list of docs.)
+
+$match:
+-------
+--> It is like filter method 
+db.persons.aggregate([ { $match: {gender:"female"}} ]).pretty()
+
+$group:
+-------
+--> groups stage allows you to group data by certain field or multiple fields
+--> <accumulator> operators: avg, first, last, max, min, push, sum, addToSet, stdDevPop, stdDevSamp
+
+db.persons.aggregate([ { $match: {gender:"female"}} , { $group:{_id:{state:"$location.state"},totalPersons: {$sum:1}}}]).pretty()
+
+Verification:
+-------------
+db.persons.find({gender:"female", "location.state":"ankara"}).count()
+
+$sort:
+------
+db.persons.aggregate([ { $match: { gender : "female" }}, { $group: { _id : { state : "$location.state" }, totalPersons : {$sum : 1} } }, {$sort : { totalPersons : -1 } } ]).pretty()
+
+db.persons.aggregate([ { $match : { "dob.age" : { $gt : 50 } } }, { $group : { _id : { gender : "$gender" }, numPersons : { $sum : 1 }, avgAge : { $avg : "$dob.age" } } },  { $sort : { numPersons : -1}} ]).pretty()
+
+$project:
+---------
+--> same as projection in find()
+--> project does not group multiple documents together, it just transforms every single document
+
+db.persons.aggregate([{$project: {_id:0, gender:1, fullName: { $concat: ["$name.first", " ", "$name.last"]}}}]).pretty()
+
+db.persons.aggregate([{$project: {_id:0, gender:1, fullName: { $concat: ["Hello ", "$name.first", " ","$name.last"]}}}]).pretty()
+
+db.persons.aggregate([{$project: {_id:0, gender:1, fullName: { $concat: [{$toUpper:"$name.first"}, " ", {$toUpper:"$name.last"}]}}}]).pretty()
+
+db.persons.aggregate([ { $project : { _id : 0, gender : 1, fullName : { $concat : [ { $toUpper : { $substrCP : ['$name.first', 0, 1]}}, ' ', { $toUpper : { $substrCP : ['$name.last', 0, 1]}}]}}}]).pretty()
+
+db.persons.aggregate([ { $project : { _id : 0 , gender : 1, fullName : { $concat : [{ $toUpper : { $substrCP : ['$name.first', 0 ,1]}}, {$substrCP : ['$name.first' , 1, { $subtract: [{ $strLenCP : 'name.first'}, 1]}]}, ' ', { $toUpper : { $substrCP: ['$name.last', 0 , 1]}}, { $substrCP : ['$name.last', 1, { $subtract: [{ $strLenCP: 'name.last'}, 1]}]} ]}}} ])
+
+
+$lookup() - for merging
+--> it is a helpful tool that allows you to fetch two relate documents to merge together in one document in one step instead of two steps
+
+use bookRegistry
+
+db.books.insertOne({name:"My Favorite Book", authors:[{name:"Max", age:29},{name:"Manu", age:43}]})
+
+db.books.find().pretty()
+
+db.authors.insertMany([{name:"Max", age:29, address:{street:"Main"}},{name:"Manu", age:43, address:{street:"Tree"}}])
+
+db.authors.find().pretty()
+
+db.books.updateOne({},{$set:{authors:[ObjectId("5f075968a950295538eca6bf"),ObjectId("5f075968a950295538eca6c0")]}})
+
+db.books.findOne()
+
+db.books.aggregate([{$lookup:{from:"authors",localField:"authors",foreignField:"_id",as:"creators"}}]).pretty()
+
+Relations:
+----------
+One-to-one Relations:
+---------------------
+Embedded:
+---------
+UseCase:
+---------
+One patient has one disease summary, a disease summary belongs to one patient
+
+use hospital
+db.patients.insertOne({name:"Max", age:29, diseaseSummary: {diseases:["cold","broken leg"]}})
+
+Reference:
+----------
+UseCase:
+--------
+One person has one car, a car belongs to one person
+
+use carData
+db.persons.insertOne({name:"Max",age:29,salary:30000})
+db.cars.insertOne({model:"BMW", price:40000, owner:ObjectId("5f074743a950295538eca6b6")})
+db.cars.findOne().owner
+
+One-to-Many Relations:
+----------------------
+Embedded:
+---------
+UseCase:
+--------
+One thread has many answers, one answer belongs to one question thread
+
+use support
+db.questionThread.insertOne({creator:"Max", question: "How does that works?", answers: [{text:"Like that.."}, {text:"Thanks!"}]})
+db.questionThread.findOne()
+
+Reference:
+----------
+UseCase:
+--------
+One City has many citizens, one citizen belongs to one city
+
+use cityData
+db.cities.insertOne({name:"New York City", coordinates:{lat:23, lng:29}})
+db.cities.findOne()
+db.citizens.insertMany([{name:"Bob", cityId:ObjectId("5f074dd5a950295538eca6bb")}, {name:"John", cityId:ObjectId("5f074dd5a950295538eca6bb")}])
+db.citizens.find().pretty()
+
+Many-to-Many Relations:
+-----------------------
+Embedded:
+---------
+UseCase:
+--------
+One customer has many products(via orders), a product belongs to many customers
+
+db.products.insertOne({titlt:"A Book", price:12.99})
+
+db.products.find().pretty()
+
+db.customers.insertOne({name:"Max", age:29})
+
+db.customers.updateOne({},{$set:{orders:[{title:"A Book",price:12.98,quantity:2}]}})
+
+db.customers.findOne()
+
+Reference:
+----------
+UseCase:
+--------
+One book has many authors, an author belongs to many books
+
+use bookRegistry
+
+db.books.insertOne({name:"My Favorite Book", authors:[{name:"Max", age:29},{name:"Manu", age:43}]})
+
+db.books.find().pretty()
+
+db.authors.insertMany([{name:"Max", age:29, address:{street:"Main"}},{name:"Manu", age:43, address:{street:"Tree"}}])
+
+db.authors.find().pretty()
+
+db.books.updateOne({},{$set:{authors:[ObjectId("5f075968a950295538eca6bf"),ObjectId("5f075968a950295538eca6c0")]}})
+
+db.books.findOne()
+
+
+Data Types
+     i. Text(" ")
+    ii. Boolean(true/false)
+   iii. Number
+        -- Integer(int32)(239)
+        -- NumberLong(int64)(10000000000000)
+        -- NumberDecimal(11.8)
+    iv. ObjectId(ObjectId("XXXXXXXXXXXXXX"))
+     v. ISODate(ISODate("2020-04-05"))
+        --Timestamp(Timestamp(11421532))
+    vi. Embedded Document({"a":{...}})
+   vii. Array({"b":[....]})
+
+Example:
+--------
+db.companies.insertOne({name:"Fresh Apples Inc", isStartup:true, employees:23, funding: 12345678901234567890, details:{ceo:"Mark Super"}, tags:[{title:"super"}, {title:"perfect"}], foundingDate: new Date(), insertedAt: new Timestamp()})
+
+
+4. stats()
+--> stats() is a utility method which is provided by the shell which outputs some stats about the database.
+
+Example:
+--------
+db.stats()
+
+db.<collection Name>.explain("executionStats").find(Filter here)
+
+5. To know the type :
+   
+Example:
+--------
+typeof db.companies.findOne()._id
+typeof db.companies.findOne().name
+typeof db.companies.findOne().funding
+
+
+Indexes:
+========
+use test
+db.emp.insert({_id:1, empid:102, name:"def", age:33})
+db.emp.insert({_id:2, empid:103, name:"feu", age:22})
+db.emp.find()
+db.emp.getIndexes()
+db.emp.createIndex({empid : 1})
+db.emp.getIndexes()
+db.emp.createIndex({age : -1})
+db.emp.getIndexes()
+
+db=db.getSiblingDB("school");
+db.students.drop();
+types = ['exam', 'quiz', 'homework', 'assignment'];
+// 1 million students
+for(i = 0; i < 500000; i++) {
+	// take 10 classes
+	for (class_counter = 0; class_counter < 10; class_counter++) {
+	scores = []
+		// and each class has 4 grades
+		for (j = 0; j < 4; j++) {
+		scores.push({'type' : types[j], 'score' : Math.random()*100});
+		}
+	// there are 500 different classes that they can take
+	class_id = Math.floor(Math.random()*501); // get a class id between 0 and 500
+	record = {'student_id' : i, 'scores' : scores, 'class_id' : class_id};
+	db.students.insert(record);
+	}
+}
+
+Types of Indexes:
+-----------------
+1. Single Key Indexes:
+----------------------
+db.collection_name.createIndex({key:"method"})
+
+2. Compound Indexes:
+--------------------
+db.collection_name.createIndex({key1:"method1", key2:"method2",....})
+
+db.students.find().count()
+
+db.students.find({"student_id":1, "class_id":212).pretty()
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+								Rough Work
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+             
+mongoimport E:\Bigdata\MongoDB\data\persons.json --db boxOffice --collection movies --drop --jsonArray
+
+db.persons.aggregate({$match:{gender:"female"}},{$out:"sample"})
+db.sample.copyTo("subset")
+
+
+
+
+var documentsToMove = db.persons.find({});
+documentsToMove.forEach(function(doc) {
+    db.collectionB.insert(doc);
+});
+
+
+
+
+
+
+
+
+
